@@ -10,7 +10,6 @@ export class AppComponent implements OnInit {
   title = 'Citas App';
   users: any;
 
-
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
@@ -18,6 +17,6 @@ export class AppComponent implements OnInit {
       next: response => this.users = response,
       error: error => console.log(error),
       complete: () => console.log('Request completed')
-    });  
+    });
   }
 }

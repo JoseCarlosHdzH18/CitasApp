@@ -60,7 +60,7 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "options":{
+          "options": {
             "ssl": true,
             "sslCert": "./ssl/example.com+5.pem",
             "sslKey": "./ssl/example.com+5-key.pem"
@@ -104,6 +104,6 @@
     }
   },
   "cli": {
-    "analytics": "131fd065-4317-4c1e-a2e5-4dbcfb17516b"
+    "analytics": "2139a025-5631-47de-a47f-5d1359291804"
   }
 }

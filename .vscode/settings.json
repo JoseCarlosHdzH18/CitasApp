@@ -1,5 +1,5 @@
 {
-  "dotnet.defaultSolution": "CitasApp.sln",
+  "dotnet.defaultSolution": "citasApp.sln",
   "files.exclude": {
     "**/.git": true,
     "**/.svn": true,

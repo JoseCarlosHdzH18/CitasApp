@@ -7,69 +7,69 @@ using API.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Api.Controllers
+namespace API.Controllers;
+
+public class AccountController : BaseApiController
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AccountController : BaseApiController
+    private readonly DataContext _context;
+    private readonly ITokenService _tokenService;
+    private const string USER_PASSWORD_ERROR_MESSAGE = "Usuario o contraseña incorrectos";
+
+    public AccountController(DataContext context, ITokenService tokenService)
     {
-        private readonly DataContext _context;
-        private readonly ITokenService _tokenService;
+        _context = context;
+        _tokenService = tokenService;
+    }
 
-        public AccountController(DataContext context, ITokenService tokenService)
+    [HttpPost("register")]
+    public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
+    {
+        if (await UserExists(registerDto.Username))
+            return BadRequest("Ya existe ese nombre de usuario");
+
+        using var hmac = new HMACSHA512();
+
+        var user = new AppUser
         {
-            _context = context;
-            _tokenService = tokenService;
+            UserName = registerDto.Username,
+            PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
+            PasswordSalt = hmac.Key
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        return new UserDto {
+            Username = user.UserName,
+            Token = _tokenService.CreateToken(user)
+        };
+    }
+
+    [HttpPost("login")]
+    public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
+    {
+        var user = await _context.Users.SingleOrDefaultAsync(x =>
+            x.UserName.ToLower() == loginDto.Username.ToLower());
+
+        if (user == null) return Unauthorized(USER_PASSWORD_ERROR_MESSAGE);
+
+        using var hmac = new HMACSHA512(user.PasswordSalt);
+
+        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
+
+        for(int i = 0; i < computedHash.Length; i++)
+        {
+            if(computedHash[i] != user.PasswordHash[i]) return Unauthorized(USER_PASSWORD_ERROR_MESSAGE);
         }
 
-        [HttpPost("register")]
-        public async Task<ActionResult<UserDTO>> Register(RegisterDTO registerDTO)
-        {
-            if(await UserExists(registerDTO.Username)) return BadRequest("Ya existe el nombre de usuario");
-            using var hmac = new HMACSHA512();
+        return new UserDto {
+            Username = user.UserName,
+            Token = _tokenService.CreateToken(user)
+        };
+    }
 
-            var user = new AppUser
-            {
-                UserName = registerDTO.Username,
-                PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDTO.Password)),
-                PasswordSalt = hmac.Key
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return new UserDTO
-            {
-                Username = user.UserName,
-                Token = _tokenService.CreateToken(user)
-            };
-
-        }
-
-        [HttpPost("login")]
-        public async Task<ActionResult<UserDTO>> Login(LoginDTO loginDTO)
-        {
-            var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName == loginDTO.Username);
-            if(user == null) return Unauthorized("Usuario o contraseña inválida");
-
-            using var hmac = new HMACSHA512(user.PasswordSalt);
-            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDTO.Password));
-
-            for(int i = 0; i < computedHash.Length; i++)
-            {
-                if(computedHash[i] != user.PasswordHash[i]) return Unauthorized("Contraseña inválida");
-            }
-
-            return new UserDTO
-            {
-                Username = user.UserName,
-                Token = _tokenService.CreateToken(user)
-            };
-        }
-
-        private async Task<bool> UserExists(string username)
-        {
-            return await _context.Users.AnyAsync(x => x.UserName == username.ToLower());
-        }
+    private async Task<bool> UserExists(string username)
+    {
+        return await _context.Users.AnyAsync(x => x.UserName == username.ToLower());
     }
 }

@@ -1,6 +1,6 @@
-import { inject } from '@angular/core';
 import { CanActivateFn } from '@angular/router';
 import { AccountService } from '../_services/account.service';
+import { inject } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { map } from 'rxjs';
 
@@ -11,8 +11,10 @@ export const authGuard: CanActivateFn = (route, state) => {
   return accountService.currentUser$.pipe(
     map(user => {
       if (user) return true;
-      toastr.error('Debes iniciar sesión para acceder a esta página');
-      return false;
+      else {
+        toastr.error("Debes ingresar al sistema");
+        return false;
+      }
     })
-    )
-  };
+  );
+};

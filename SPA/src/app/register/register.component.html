@@ -62,5 +62,13 @@
   [type]="'password'"
 ></app-text-input>
 
+<div class="row" *ngIf="validationErrors">
+  <ul class="text-danger">
+    <li *ngFor="let error of validationErrors">
+      {{ error }}
+    </li>
+  </ul>
+</div>
+
 <p>Form value: {{ registerForm.value | json }}</p>
 <p>Form status: {{ registerForm.status | json }}</p>

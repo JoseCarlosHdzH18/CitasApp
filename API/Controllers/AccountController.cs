@@ -45,7 +45,7 @@ public class AccountController : BaseApiController
         return new UserDto
         {
             Username = user.UserName,
-            oken = _tokenService.CreateToken(user),
+            Token = _tokenService.CreateToken(user),
             KnownAs = user.KnownAs
         };
     }
